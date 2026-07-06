@@ -6,7 +6,7 @@ import { BoardTheme, TOKENS } from '../core/types';
 
 interface Props { onStart: () => void; }
 
-const PLAYER_COUNTS = [2, 3, 4];
+const PLAYER_COUNTS = [0, 1, 2, 3, 4];
 const THEMES: { key: BoardTheme; label: string; desc: string }[] = [
   { key: 'indonesia', label: '🇮🇩 Indonesia', desc: '40 kotak — kota-kota Indonesia' },
   { key: 'world-mini', label: '🌍 World Mini', desc: '24 kotak — kota-kota dunia' },
@@ -15,12 +15,15 @@ const THEMES: { key: BoardTheme; label: string; desc: string }[] = [
 export default function HomeScreen({ onStart }: Props) {
   const insets = useSafeAreaInsets();
   const { newGame } = useGameStore();
-  const [playerCount, setPlayerCount] = useState(2);
+  const [humanCount, setHumanCount] = useState(1);
   const [aiCount, setAiCount] = useState(1);
   const [theme, setTheme] = useState<BoardTheme>('indonesia');
 
+  const total = humanCount + aiCount;
+  const canStart = total >= 2 && total <= 4;
+
   const handleStart = () => {
-    const humanCount = playerCount - aiCount;
+    if (!canStart) return;
     const players = [];
     for (let i = 0; i < humanCount; i++) {
       players.push({ name: `Pemain ${i + 1}`, token: TOKENS[i], isAI: false });
@@ -53,35 +56,43 @@ export default function HomeScreen({ onStart }: Props) {
           ))}
         </View>
 
-        {/* Player count */}
-        <Text style={styles.sectionLabel}>Jumlah Pemain</Text>
+        {/* Human players */}
+        <Text style={styles.sectionLabel}>Pemain Manusia</Text>
         <View style={styles.row}>
           {PLAYER_COUNTS.map((n) => (
             <TouchableOpacity
               key={n}
-              style={[styles.chip, playerCount === n && styles.chipActive]}
-              onPress={() => { setPlayerCount(n); setAiCount(Math.min(aiCount, n - 1)); }}
+              style={[styles.chip, humanCount === n && styles.chipActive, (n + aiCount > 4 || n + aiCount < 2) && n !== humanCount && styles.chipDisabled]}
+              onPress={() => { if (n + aiCount <= 4) setHumanCount(n); }}
+              disabled={n + aiCount > 4}
             >
-              <Text style={[styles.chipText, playerCount === n && styles.chipTextActive]}>{n}</Text>
+              <Text style={[styles.chipText, humanCount === n && styles.chipTextActive]}>{n}</Text>
             </TouchableOpacity>
           ))}
         </View>
 
         {/* AI count */}
-        <Text style={styles.sectionLabel}>Jumlah Bot (AI)</Text>
+        <Text style={styles.sectionLabel}>Bot AI</Text>
         <View style={styles.row}>
-          {Array.from({ length: playerCount }, (_, i) => i).map((n) => (
+          {PLAYER_COUNTS.map((n) => (
             <TouchableOpacity
               key={n}
-              style={[styles.chip, aiCount === n && styles.chipActive]}
-              onPress={() => setAiCount(n)}
+              style={[styles.chip, aiCount === n && styles.chipActive, (humanCount + n > 4 || humanCount + n < 2) && n !== aiCount && styles.chipDisabled]}
+              onPress={() => { if (humanCount + n <= 4) setAiCount(n); }}
+              disabled={humanCount + n > 4}
             >
               <Text style={[styles.chipText, aiCount === n && styles.chipTextActive]}>{n}</Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        <TouchableOpacity style={styles.startBtn} onPress={handleStart} accessibilityRole="button">
+        {/* Total indicator */}
+        <View style={styles.totalRow}>
+          <Text style={styles.totalText}>Total: {total} pemain</Text>
+          {!canStart && <Text style={styles.totalWarn}>⚠️ Minimal 2, maksimal 4</Text>}
+        </View>
+
+        <TouchableOpacity style={[styles.startBtn, !canStart && styles.startBtnDisabled]} onPress={handleStart} accessibilityRole="button" disabled={!canStart}>
           <Text style={styles.startText}>🎲 Mulai Permainan</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -105,5 +116,10 @@ const styles = StyleSheet.create({
   chipText: { fontSize: 18, fontWeight: '700', color: '#94a3b8' },
   chipTextActive: { color: '#a78bfa' },
   startBtn: { marginTop: 40, backgroundColor: '#a78bfa', paddingVertical: 16, paddingHorizontal: 48, borderRadius: 16, width: '100%', alignItems: 'center' },
+  startBtnDisabled: { opacity: 0.4 },
   startText: { fontSize: 18, fontWeight: '800', color: '#1a1a2e' },
+  chipDisabled: { opacity: 0.3 },
+  totalRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 12 },
+  totalText: { fontSize: 14, color: '#e2e8f0', fontWeight: '600' },
+  totalWarn: { fontSize: 12, color: '#fbbf24' },
 });
