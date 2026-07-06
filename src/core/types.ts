@@ -119,4 +119,4 @@ export const GO_SALARY = 2_000_000;       // Rp 2 juta saat lewat START
 export const JAIL_FINE = 500_000;
 export const MAX_HOUSES = 5; // 5 = hotel
 
-export const TOKENS = ['🚗', '🚢', '✈️', '🏍️', '🚂', '🎩'];
+export const TOKENS = ['🚗', '🚢', '✈️', '🏍️', '🚂', '🎩', '👟', '💎', '🐶', '🦁', '🐲', '🌟'];
