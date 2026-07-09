@@ -94,12 +94,47 @@ Type: `feat` `fix` `refactor` `test` `chore` `docs`
 
 ## Roadmap
 
-- [ ] Visual board layout (circular/grid)
-- [ ] Animated dice roll (Reanimated)
-- [ ] Animated pion movement
+- [x] Visual board layout (BoardView + PlayerToken + DiceAnimation)
+- [x] Animated dice roll (Reanimated rotate + scale)
+- [x] Animated pion movement (spring physics)
+- [x] Trade AI Negotiation (AI proposes + modal accept/reject)
+- [x] Property Card Gallery (grouped by color, filter, rent table)
+- [x] House Rules Toggle (Free Parking, Double GO, No Auction, Custom money)
 - [ ] Auction modal
-- [ ] Trade modal (player-to-player)
+- [ ] Trade modal (player-to-player manual)
 - [ ] Statistics & history
 - [ ] Sound effects + haptic feedback
 - [ ] Dark/light theme
 - [ ] Online multiplayer (Supabase)
+
+---
+
+## Fitur Baru (Juli 2026)
+
+### Visual Board + Animasi
+- `src/components/BoardView.tsx`: papan visual grid/ring, warna properti, owner indicator, house dots
+- `src/components/DiceAnimation.tsx`: animasi rotate + scale via Reanimated, tampil hasil
+- `src/components/PlayerToken.tsx`: token emoji dengan spring movement animation
+
+### Trade AI Negotiation
+- `src/core/ai.ts`: `aiProposeTrade()` (cari color group yang butuh 1 lagi, propose tukar) + `aiTradeDecision()` (evaluasi fairness + group benefit)
+- `src/store/gameStore.ts`: `proposeTrade` + `respondTrade` actions, `tradeOffer: TradeOffer | null` di state
+- `src/components/TradeModal.tsx`: modal tampilkan offered/requested properties + accept/reject
+- AI auto-propose di akhir giliran jika ada trade menguntungkan
+- AI-to-AI trade langsung auto-resolve
+
+### Property Card Gallery
+- `src/screens/PropertyGalleryScreen.tsx`: semua properti grouped by color
+- Filter: "Semua" / "Milik Saya" / "Tersedia"
+- Detail: nama, harga, rent table (base sampai hotel), house price, owner, houses, mortgage status
+- Accessible dari HomeScreen ("📋 Galeri Properti") dan GameScreen (icon 📋)
+
+### House Rules Toggle
+- `HouseRules` interface di `types.ts`: `freeParking`, `doubleOnGo`, `noAuction`, `startingMoney`
+- `houseRules` state di-persist (terpisah dari game state)
+- `handleLanding` respects free parking pot (tax masuk pot, dikumpulkan saat mendarat)
+- `rollAndMove` respects double on GO (Rp 4jt saat mendarat tepat di START)
+- HomeScreen: toggle switches + starting money chips (15/20/30/50jt)
+
+### Navigation
+- `App.tsx`: 'home' | 'game' | 'gallery' — smart back dari gallery ke screen sebelumnya

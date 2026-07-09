@@ -3,18 +3,20 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   GameState, Player, Property, BoardTheme, BoardSpace,
-  STARTING_MONEY, GO_SALARY, JAIL_FINE, GamePhase,
+  STARTING_MONEY, GO_SALARY, JAIL_FINE, GamePhase, HouseRules, TradeOffer,
 } from '../core/types';
 import { getBoard } from '../core/board';
 import { rollDice } from '../core/dice';
 import { shuffleDeck, getCard, COMMUNITY_CARDS, CHANCE_CARDS } from '../core/cards';
 import { calculateRent, canBuildHouse, mortgageValue, passedGo, ownsFullGroup } from '../core/rules';
-import { aiBuyDecision, aiJailDecision, aiBuildDecision } from '../core/ai';
+import { aiBuyDecision, aiJailDecision, aiBuildDecision, aiProposeTrade, aiTradeDecision } from '../core/ai';
 
 interface PlayerInit { name: string; token: string; isAI: boolean; }
 
 interface GameStore {
   state: GameState | null;
+  houseRules: HouseRules;
+  setHouseRules: (rules: Partial<HouseRules>) => void;
   newGame: (theme: BoardTheme, players: PlayerInit[]) => void;
   rollAndMove: () => void;
   buyProperty: () => void;
@@ -22,6 +24,8 @@ interface GameStore {
   endTurn: () => void;
   buildHouse: (spaceId: number) => void;
   mortgageProperty: (spaceId: number) => void;
+  proposeTrade: (offer: TradeOffer) => void;
+  respondTrade: (accept: boolean) => void;
 }
 
 function initProperties(board: BoardSpace[]): Property[] {
@@ -62,7 +66,18 @@ function handleLanding(state: GameState): GameState {
   if (space.type === 'tax') {
     const tax = space.taxAmount ?? 0;
     player.money -= tax;
-    return { ...state, phase: 'paying', lastAction: `${player.token} bayar ${space.name}: Rp ${(tax / 1_000_000).toFixed(1)}jt` };
+    let freeParkingPot = state.freeParkingPot;
+    if (state.houseRules.freeParking) {
+      freeParkingPot += tax;
+    }
+    return { ...state, freeParkingPot, phase: 'paying', lastAction: `${player.token} bayar ${space.name}: Rp ${(tax / 1_000_000).toFixed(1)}jt` };
+  }
+
+  // Free parking — collect pot if house rule active
+  if (space.type === 'free-parking' && state.houseRules.freeParking && state.freeParkingPot > 0) {
+    const pot = state.freeParkingPot;
+    player.money += pot;
+    return { ...state, freeParkingPot: 0, phase: 'paying', lastAction: `${player.token} dapat Rp ${(pot / 1_000_000).toFixed(1)}jt dari Parkir Gratis! 🎉` };
   }
 
   // Community / Chance
@@ -135,11 +150,18 @@ export const useGameStore = create<GameStore>()(
   persist(
     (set, get) => ({
       state: null,
+      houseRules: { freeParking: false, doubleOnGo: false, noAuction: false, startingMoney: 20_000_000 },
+
+      setHouseRules: (rules) => {
+        set((s) => ({ houseRules: { ...s.houseRules, ...rules } }));
+      },
 
       newGame: (theme, players) => {
+        const { houseRules } = get();
         const board = getBoard(theme);
+        const startMoney = houseRules.startingMoney;
         const gamePlayers: Player[] = players.map((p, i) => ({
-          id: i, name: p.name, token: p.token, money: STARTING_MONEY,
+          id: i, name: p.name, token: p.token, money: startMoney,
           position: 0, inJail: false, jailTurns: 0, hasGetOutOfJailCard: 0,
           bankrupt: false, isAI: p.isAI,
         }));
@@ -153,7 +175,10 @@ export const useGameStore = create<GameStore>()(
             dice: null, doublesCount: 0,
             communityDeck: shuffleDeck(COMMUNITY_CARDS),
             chanceDeck: shuffleDeck(CHANCE_CARDS),
-            auction: null, turnCount: 0,
+            auction: null, tradeOffer: null,
+            houseRules,
+            freeParkingPot: 0,
+            turnCount: 0,
             winner: null, lastAction: 'Permainan dimulai! 🎲',
           },
         });
@@ -212,6 +237,10 @@ export const useGameStore = create<GameStore>()(
         player.position = (player.position + dice.total) % state.board.length;
         if (passedGo(oldPos, player.position, state.board.length) && player.position !== 0) {
           player.money += GO_SALARY;
+        }
+        // Double on GO house rule
+        if (player.position === 0 && state.houseRules.doubleOnGo) {
+          player.money += GO_SALARY; // extra (total 4jt)
         }
 
         let newState: GameState = { ...state, players, dice, doublesCount, phase: 'landed' };
@@ -290,6 +319,24 @@ export const useGameStore = create<GameStore>()(
           if (builds.length > 0) {
             builds.forEach((spaceId) => get().buildHouse(spaceId));
           }
+          // AI try to propose trade
+          const trade = aiProposeTrade(player, state.players, state.properties, state.board);
+          if (trade) {
+            const target = state.players[trade.to];
+            if (target && target.isAI) {
+              // AI-to-AI trade: auto-decide
+              const accept = aiTradeDecision(trade, target, state.properties, state.board);
+              if (accept) {
+                get().proposeTrade(trade);
+                get().respondTrade(true);
+                return;
+              }
+            } else if (target && !target.bankrupt) {
+              // AI proposes to human — show modal
+              set({ state: { ...state, tradeOffer: trade, phase: 'trading', lastAction: `${player.token} mengajukan tukar properti ke ${target.token}` } });
+              return;
+            }
+          }
         }
 
         // Doubles = roll again (unless went to jail)
@@ -346,11 +393,53 @@ export const useGameStore = create<GameStore>()(
         const properties = state.properties.map((p) => p.spaceId === spaceId ? { ...p, mortgaged: true } : p);
         set({ state: { ...state, players, properties, lastAction: `${player.token} mortgage ${space.name} (Rp ${(value / 1_000_000).toFixed(1)}jt)` } });
       },
+
+      proposeTrade: (offer) => {
+        const { state } = get();
+        if (!state) return;
+        set({ state: { ...state, tradeOffer: offer, phase: 'trading' as GamePhase, lastAction: `${state.players[offer.from].token} mengajukan tukar ke ${state.players[offer.to].token}` } });
+      },
+
+      respondTrade: (accept) => {
+        const { state } = get();
+        if (!state || !state.tradeOffer) return;
+        const offer = state.tradeOffer;
+        const players = [...state.players];
+        let properties = [...state.properties];
+
+        if (accept) {
+          // Transfer properties
+          properties = properties.map((p) => {
+            if (offer.offerProperties.includes(p.spaceId) && p.ownerId === offer.from) {
+              return { ...p, ownerId: offer.to };
+            }
+            if (offer.requestProperties.includes(p.spaceId) && p.ownerId === offer.to) {
+              return { ...p, ownerId: offer.from };
+            }
+            return p;
+          });
+          // Transfer money
+          players[offer.from] = { ...players[offer.from], money: players[offer.from].money - offer.offerMoney + offer.requestMoney };
+          players[offer.to] = { ...players[offer.to], money: players[offer.to].money - offer.requestMoney + offer.offerMoney };
+        }
+
+        const fromPlayer = players[offer.from];
+        const action = accept
+          ? `${players[offer.to].token} menerima tukar dari ${fromPlayer.token}! 🤝`
+          : `${players[offer.to].token} menolak tukar dari ${fromPlayer.token}`;
+
+        set({ state: { ...state, players, properties, tradeOffer: null, phase: 'paying' as GamePhase, lastAction: action } });
+
+        // If current player is AI, continue their turn
+        if (fromPlayer.isAI) {
+          setTimeout(() => get().endTurn(), 800);
+        }
+      },
     }),
     {
       name: 'monopoly-game-store',
       storage: createJSONStorage(() => AsyncStorage),
-      partialize: (s) => ({ state: s.state }),
+      partialize: (s) => ({ state: s.state, houseRules: s.houseRules }),
     },
   ),
 );

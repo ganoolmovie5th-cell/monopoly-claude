@@ -5,10 +5,11 @@ import { useGameStore } from '../store/gameStore';
 import { BoardView } from '../components/BoardView';
 import { DiceAnimation } from '../components/DiceAnimation';
 import { PlayerToken } from '../components/PlayerToken';
+import { TradeModal } from '../components/TradeModal';
 
-interface Props { onBack: () => void; }
+interface Props { onBack: () => void; onGallery: () => void; }
 
-export default function GameScreen({ onBack }: Props) {
+export default function GameScreen({ onBack, onGallery }: Props) {
   const insets = useSafeAreaInsets();
   const { state, rollAndMove, buyProperty, skipBuy, endTurn } = useGameStore();
   const [rolling, setRolling] = useState(false);
@@ -35,8 +36,13 @@ export default function GameScreen({ onBack }: Props) {
             <Text style={styles.backText}>← Keluar</Text>
           </TouchableOpacity>
           <Text style={styles.turnLabel}>{current.token} {current.name}</Text>
-          <View style={styles.moneyBadge}>
-            <Text style={styles.moneyText}>Rp {(current.money / 1_000_000).toFixed(1)}jt</Text>
+          <View style={styles.headerRight}>
+            <TouchableOpacity onPress={onGallery} style={styles.galleryMiniBtn}>
+              <Text style={styles.galleryMiniText}>📋</Text>
+            </TouchableOpacity>
+            <View style={styles.moneyBadge}>
+              <Text style={styles.moneyText}>Rp {(current.money / 1_000_000).toFixed(1)}jt</Text>
+            </View>
           </View>
         </View>
 
@@ -112,6 +118,7 @@ export default function GameScreen({ onBack }: Props) {
           )}
         </View>
       </ScrollView>
+      <TradeModal />
     </SafeAreaView>
   );
 }
@@ -123,6 +130,9 @@ const styles = StyleSheet.create({
   backBtn: { paddingVertical: 6, paddingHorizontal: 10, backgroundColor: '#2a2a4a', borderRadius: 8 },
   backText: { color: '#94a3b8', fontWeight: '600', fontSize: 12 },
   turnLabel: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  galleryMiniBtn: { width: 32, height: 32, borderRadius: 8, backgroundColor: '#2a2a4a', justifyContent: 'center', alignItems: 'center' },
+  galleryMiniText: { fontSize: 16 },
   moneyBadge: { backgroundColor: 'rgba(74,222,128,0.15)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(74,222,128,0.3)' },
   moneyText: { color: '#4ade80', fontWeight: '700', fontSize: 12 },
   boardContainer: { position: 'relative', alignSelf: 'center', marginVertical: 8 },

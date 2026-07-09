@@ -97,6 +97,22 @@ export interface AuctionState {
   activeBidders: number[]; // player IDs still in auction
 }
 
+export interface TradeOffer {
+  from: number;
+  to: number;
+  offerProperties: number[];
+  requestProperties: number[];
+  offerMoney: number;
+  requestMoney: number;
+}
+
+export interface HouseRules {
+  freeParking: boolean;       // collect taxes in free parking pot
+  doubleOnGo: boolean;        // Rp 4jt when landing exactly on GO
+  noAuction: boolean;         // skip auction, property stays unowned
+  startingMoney: number;      // custom starting money (default 20_000_000)
+}
+
 export interface GameState {
   players: Player[];
   properties: Property[];
@@ -109,6 +125,9 @@ export interface GameState {
   communityDeck: number[];  // shuffled card IDs
   chanceDeck: number[];
   auction: AuctionState | null;
+  tradeOffer: TradeOffer | null;
+  houseRules: HouseRules;
+  freeParkingPot: number;
   turnCount: number;
   winner: number | null;
   lastAction: string;       // description of last action for log

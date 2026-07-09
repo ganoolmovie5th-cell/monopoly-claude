@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useGameStore } from '../store/gameStore';
 import { BoardTheme, TOKENS } from '../core/types';
 
-interface Props { onStart: () => void; }
+interface Props { onStart: () => void; onGallery: () => void; }
 
 const PLAYER_COUNTS = [0, 1, 2, 3, 4];
 const THEMES: { key: BoardTheme; label: string; icon: string; desc: string }[] = [
@@ -17,9 +17,9 @@ interface HumanSetup {
   token: string;
 }
 
-export default function HomeScreen({ onStart }: Props) {
+export default function HomeScreen({ onStart, onGallery }: Props) {
   const insets = useSafeAreaInsets();
-  const { newGame } = useGameStore();
+  const { newGame, houseRules, setHouseRules } = useGameStore();
   const [humanCount, setHumanCount] = useState(1);
   const [aiCount, setAiCount] = useState(1);
   const [theme, setTheme] = useState<BoardTheme>('indonesia');
@@ -173,6 +173,53 @@ export default function HomeScreen({ onStart }: Props) {
           {canStart && <Text style={styles.totalOk}>✅ Siap bermain!</Text>}
         </View>
 
+        {/* House Rules */}
+        <Text style={styles.sectionLabel}>🏠 House Rules</Text>
+        <View style={styles.rulesCard}>
+          <TouchableOpacity style={styles.ruleRow} onPress={() => setHouseRules({ freeParking: !houseRules.freeParking })}>
+            <View style={[styles.toggle, houseRules.freeParking && styles.toggleActive]} />
+            <View style={styles.ruleInfo}>
+              <Text style={styles.ruleName}>Free Parking Pot</Text>
+              <Text style={styles.ruleDesc}>Pajak masuk pot, dikumpulkan saat mendarat</Text>
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.ruleRow} onPress={() => setHouseRules({ doubleOnGo: !houseRules.doubleOnGo })}>
+            <View style={[styles.toggle, houseRules.doubleOnGo && styles.toggleActive]} />
+            <View style={styles.ruleInfo}>
+              <Text style={styles.ruleName}>Double di START</Text>
+              <Text style={styles.ruleDesc}>Rp 4jt saat mendarat tepat di START</Text>
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.ruleRow} onPress={() => setHouseRules({ noAuction: !houseRules.noAuction })}>
+            <View style={[styles.toggle, houseRules.noAuction && styles.toggleActive]} />
+            <View style={styles.ruleInfo}>
+              <Text style={styles.ruleName}>Tanpa Lelang</Text>
+              <Text style={styles.ruleDesc}>Properti tidak dilelang, tetap kosong</Text>
+            </View>
+          </TouchableOpacity>
+          <View style={styles.ruleRow}>
+            <Text style={styles.ruleName}>💰 Modal Awal: Rp {(houseRules.startingMoney / 1_000_000).toFixed(0)}jt</Text>
+          </View>
+          <View style={styles.moneyBtns}>
+            {[15_000_000, 20_000_000, 30_000_000, 50_000_000].map((amount) => (
+              <TouchableOpacity
+                key={amount}
+                style={[styles.moneyChip, houseRules.startingMoney === amount && styles.moneyChipActive]}
+                onPress={() => setHouseRules({ startingMoney: amount })}
+              >
+                <Text style={[styles.moneyChipText, houseRules.startingMoney === amount && styles.moneyChipTextActive]}>
+                  {amount / 1_000_000}jt
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {/* Gallery button */}
+        <TouchableOpacity style={styles.galleryBtn} onPress={onGallery} accessibilityRole="button">
+          <Text style={styles.galleryText}>📋 Galeri Properti</Text>
+        </TouchableOpacity>
+
         {/* Start button */}
         <TouchableOpacity
           style={[styles.startBtn, !canStart && styles.startBtnDisabled]}
@@ -224,4 +271,18 @@ const styles = StyleSheet.create({
   startBtn: { marginTop: 24, backgroundColor: '#a78bfa', paddingVertical: 16, borderRadius: 16, alignItems: 'center', shadowColor: '#a78bfa', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 5 },
   startBtnDisabled: { opacity: 0.4, shadowOpacity: 0 },
   startText: { fontSize: 18, fontWeight: '800', color: '#0f0f23' },
+  rulesCard: { backgroundColor: '#1e1e3a', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: 'rgba(167,139,250,0.2)' },
+  ruleRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10 },
+  toggle: { width: 40, height: 24, borderRadius: 12, backgroundColor: '#334155', justifyContent: 'center', paddingHorizontal: 3 },
+  toggleActive: { backgroundColor: '#a78bfa' },
+  ruleInfo: { flex: 1 },
+  ruleName: { fontSize: 14, fontWeight: '600', color: '#e2e8f0' },
+  ruleDesc: { fontSize: 11, color: '#64748b', marginTop: 2 },
+  moneyBtns: { flexDirection: 'row', gap: 8, marginTop: 8, paddingLeft: 52 },
+  moneyChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, backgroundColor: '#0f0f23', borderWidth: 1, borderColor: 'rgba(167,139,250,0.2)' },
+  moneyChipActive: { borderColor: '#a78bfa', backgroundColor: 'rgba(167,139,250,0.2)' },
+  moneyChipText: { fontSize: 12, color: '#94a3b8', fontWeight: '600' },
+  moneyChipTextActive: { color: '#a78bfa' },
+  galleryBtn: { marginTop: 16, backgroundColor: '#2a2a4a', paddingVertical: 14, borderRadius: 14, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(167,139,250,0.2)' },
+  galleryText: { fontSize: 15, fontWeight: '700', color: '#a78bfa' },
 });

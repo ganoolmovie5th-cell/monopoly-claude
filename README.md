@@ -8,6 +8,10 @@ Game Monopoly klasik untuk mobile dengan tema kota-kota Indonesia. Dibangun deng
 - **Board World Mini (24 kotak)** — kota-kota dunia (Cairo, London, Tokyo, New York)
 - **2-4 pemain** — hot-seat (giliran di satu HP)
 - **AI lawan** — bot dengan strategi beli/bangun/mortgage otomatis
+- **Visual Board + Animasi** — papan visual dengan warna properti, indikator pemilik, animasi dadu & token movement (Reanimated spring)
+- **Trade AI Negotiation** — AI mengajukan tukar properti untuk melengkapi color group, modal terima/tolak
+- **Property Card Gallery** — galeri semua properti grouped by color, filter Semua/Milik Saya/Tersedia, detail rent table
+- **House Rules Toggle** — Free Parking pot, Double on GO, Tanpa Lelang, Custom starting money (15-50jt)
 - **Full Monopoly rules:**
   - Beli properti, bayar sewa, rumah & hotel
   - Kartu Dana Umum & Kesempatan (24 kartu)
@@ -18,7 +22,7 @@ Game Monopoly klasik untuk mobile dengan tema kota-kota Indonesia. Dibangun deng
   - Even building rule (rumah merata per group)
 - **Dadu dengan doubles** — lempar lagi saat doubles
 - **Save/load otomatis** — game state tersimpan di AsyncStorage
-- **Mata uang Rupiah** — starting money Rp 20 juta
+- **Mata uang Rupiah** — configurable starting money
 
 ## Tech Stack
 
@@ -80,13 +84,14 @@ src/
 
 ## Roadmap
 
-- [ ] Visual board (grid/circle layout)
-- [ ] Animated dice roll
-- [ ] Animated pion movement
-- [ ] Auction system
-- [ ] Trade between players
+- [x] Visual board dengan animasi (BoardView + PlayerToken + DiceAnimation)
+- [x] Trade AI Negotiation (AI propose + human accept/reject modal)
+- [x] Property Card Gallery (galeri semua properti grouped by color)
+- [x] House Rules Toggle (Free Parking, Double GO, No Auction, Custom money)
+- [ ] Auction system (saat pemain skip beli)
 - [ ] Statistics & leaderboard
 - [ ] Sound effects & haptic feedback
+- [ ] Online multiplayer
 
 ## License
 
