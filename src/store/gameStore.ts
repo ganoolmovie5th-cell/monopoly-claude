@@ -3,7 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   GameState, Player, Property, BoardTheme, BoardSpace,
-  STARTING_MONEY, GO_SALARY, JAIL_FINE, GamePhase, HouseRules, TradeOffer,
+  GO_SALARY, JAIL_FINE, GamePhase, HouseRules, TradeOffer,
 } from '../core/types';
 import { getBoard } from '../core/board';
 import { rollDice } from '../core/dice';

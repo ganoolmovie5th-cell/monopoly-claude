@@ -65,30 +65,9 @@ export function mortgageValue(space: BoardSpace): number {
   return Math.floor((space.price ?? 0) / 2);
 }
 
-/** Unmortgage cost (50% price + 10% interest). */
-export function unmortgageCost(space: BoardSpace): number {
-  const half = Math.floor((space.price ?? 0) / 2);
-  return half + Math.floor(half * 0.1);
-}
-
 /** Check if a player passed GO during movement. */
 export function passedGo(oldPos: number, newPos: number, boardSize: number): boolean {
   return newPos < oldPos || (oldPos === newPos && oldPos === 0);
 }
 
-/** Calculate total assets of a player (money + property values + houses). */
-export function totalAssets(player: Player, properties: Property[], board: BoardSpace[]): number {
-  let total = player.money;
-  for (const prop of properties) {
-    if (prop.ownerId !== player.id) continue;
-    const space = board[prop.spaceId];
-    if (!space) continue;
-    if (prop.mortgaged) {
-      total += mortgageValue(space);
-    } else {
-      total += space.price ?? 0;
-      total += prop.houses * (space.housePrice ?? 0);
-    }
-  }
-  return total;
-}
+
