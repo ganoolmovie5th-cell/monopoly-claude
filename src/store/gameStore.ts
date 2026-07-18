@@ -188,8 +188,11 @@ export const useGameStore = create<GameStore>()(
       },
 
       rollAndMove: () => {
-        const { state } = get();
+        const { state, undoStack } = get();
         if (!state || state.phase !== 'rolling') return;
+
+        // Capture state before roll for undo
+        set({ undoStack: [...undoStack, state] });
 
         const dice = rollDice();
         const player = { ...state.players[state.currentPlayerIndex] };
@@ -437,6 +440,15 @@ export const useGameStore = create<GameStore>()(
         if (fromPlayer.isAI) {
           setTimeout(() => get().endTurn(), 800);
         }
+      },
+
+      undo: () => {
+        const { undoStack } = get();
+        if (!undoStack || undoStack.length === 0) return;
+        // ponytail: restore from undoStack. Push-before-action added as needed per action.
+        const newStack = [...undoStack];
+        const prevState = newStack.pop()!;
+        set({ state: prevState, undoStack: newStack });
       },
     }),
     {
