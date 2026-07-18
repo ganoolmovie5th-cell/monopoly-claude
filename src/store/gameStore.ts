@@ -15,6 +15,7 @@ interface PlayerInit { name: string; token: string; isAI: boolean; }
 
 interface GameStore {
   state: GameState | null;
+  undoStack: GameState[];
   houseRules: HouseRules;
   setHouseRules: (rules: Partial<HouseRules>) => void;
   newGame: (theme: BoardTheme, players: PlayerInit[]) => void;
@@ -26,6 +27,7 @@ interface GameStore {
   mortgageProperty: (spaceId: number) => void;
   proposeTrade: (offer: TradeOffer) => void;
   respondTrade: (accept: boolean) => void;
+  undo: () => void;
 }
 
 function initProperties(board: BoardSpace[]): Property[] {
@@ -150,6 +152,7 @@ export const useGameStore = create<GameStore>()(
   persist(
     (set, get) => ({
       state: null,
+      undoStack: [],
       houseRules: { freeParking: false, doubleOnGo: false, noAuction: false, startingMoney: 20_000_000 },
 
       setHouseRules: (rules) => {
