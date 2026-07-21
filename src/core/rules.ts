@@ -1,5 +1,5 @@
 // Game rules engine. Pure functions, no React.
-import { BoardSpace, Player, Property, GameState, GO_SALARY, JAIL_FINE, MAX_HOUSES, ColorGroup } from './types';
+import { BoardSpace, Player, Property, GO_SALARY, JAIL_FINE, MAX_HOUSES, ColorGroup } from './types';
 
 /** Count how many properties of a color group a player owns (un-mortgaged). */
 export function countOwnedInGroup(properties: Property[], board: BoardSpace[], playerId: number, color: ColorGroup): number {
