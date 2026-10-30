@@ -15,7 +15,7 @@ describe('gameStore undo', () => {
   });
 
   test('undo restores previous state from stack', () => {
-    useGameStore.getState().newGame('classic', [
+    useGameStore.getState().newGame('indonesia', [
       { name: 'P1', token: '🎩', isAI: false },
       { name: 'P2', token: '🐶', isAI: true },
     ]);
@@ -34,7 +34,7 @@ describe('gameStore undo', () => {
   });
 
   test('undo stack builds on successive rolls', () => {
-    useGameStore.getState().newGame('classic', [
+    useGameStore.getState().newGame('indonesia', [
       { name: 'P1', token: '🎩', isAI: false },
       { name: 'P2', token: '🐶', isAI: true },
     ]);
@@ -50,7 +50,7 @@ describe('gameStore undo', () => {
   });
 
   test('undo with empty stack is no-op', () => {
-    useGameStore.getState().newGame('classic', [
+    useGameStore.getState().newGame('indonesia', [
       { name: 'P1', token: '🎩', isAI: false },
     ]);
 
