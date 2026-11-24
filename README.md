@@ -1,8 +1,8 @@
 # Monopoly Indonesia
 
-Game Monopoly klasik untuk mobile dengan tema kota-kota Indonesia. Board 40 kotak dari Jayapura sampai Jakarta. Dibangun dengan React Native + Expo SDK 54.
+Game Monopoly klasik untuk mobile dengan tema kota-kota Indonesia. Board 40 kotak dari Jayapura sampai Jakarta. Dibangun dengan React Native + Expo SDK 58.
 
-**Tech Stack:** React Native · Expo SDK 54 · TypeScript · Zustand · Reanimated · Gesture Handler
+**Tech Stack:** React Native · Expo SDK 58 · TypeScript · Zustand · Reanimated · Gesture Handler
 
 ## Features
 
